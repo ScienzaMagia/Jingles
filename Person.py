@@ -1,5 +1,4 @@
-
-
+import datetime
 
 class Person:
 
@@ -10,14 +9,28 @@ class Person:
         self.circles = {}
         self.plus1s = 0
         self.comments = 0
-        self.firstInteraction = ""
-        self.lastInteraction = ""
+        self.firstInteraction = datetime.datetime(datetime.MAXYEAR, 12, 30, 0, 0, 0, 0, datetime.timezone.utc)
+        self.lastInteraction = datetime.datetime(datetime.MINYEAR, 1, 1, 0, 0, 0, 0, datetime.timezone.utc)
 
     def __repr__(self):
-        return "[" + self.number + ", " + self.name + ", " + self.nickname + "]"
+        return "[Number: " + self.number + ", Name: " + self.name + ", Nicknames: " + self.nickname + ", Interactions: " + str(self.plus1s + self.comments) + "]"
 
     def addCircle(self, circle):
         self.circles.update({circle.name : circle})
+
+    def updateFirstInteraction (self, time):
+        if time < self.firstInteraction:
+            self.firstInteraction = time
+
+    def getLastInteraction(self):
+        return self.lastInteraction
+
+    def getFirstInteraction(self):
+        return self.lastInteraction
+
+    def updateLastInteraction (self, time):
+        if time > self.lastInteraction:
+            self.lastInteraction = time
 
     def updatePlus1s(self):
         self.plus1s+=1
@@ -26,7 +39,7 @@ class Person:
         self.comments+=1
 
     def totalInteractions(self):
-        return self.plus1s + comments
+        return self.plus1s + self.comments
 
     def getPlus1s(self):
         return self.plus1s

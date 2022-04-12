@@ -13,3 +13,6 @@ class GPlusCircle:
 
     def addPerson(self, person):
         self.members.update({person.number : person})
+
+    def __len__(self):
+        return len(self.members)
