@@ -1,7 +1,8 @@
 import sys
 import os
 from bs4 import BeautifulSoup
-
+from GPlusCircle import GPlusCircle
+from Person import Person
 class GPlusCalc:
 
 
@@ -15,14 +16,28 @@ class GPlusCalc:
         for file in os.listdir(directory):
             filename = os.fsdecode(file)
             if filename.endswith(".vcf"):
-                print(filename)
-                doc = open(takeout + "/Google+ Circles" + filename + ".vcf", "r")
-
-                # print(os.path.join(directory, filename))
+                circle = GPlusCircle(filename[0:len(filename)-4])
+                print(circle.name)
+                name = ""
+                number = ""
+                with open(takeout + "/Google+ Circles" + "/"  + filename) as vcf:
+                    for line in vcf:
+                        if line[0:3] == "FN:":
+                            name = line[3:len(line)].rstrip()
+                        elif line[0:3] == "URL":
+                            number = line[29:len(line)].rstrip()
+                        elif line[0:3] == "END":
+                            person = Person(number, name)
+                            person.addCircle(circle)
+                            users.update({number : person})
+                            circle.addPerson(person)
+                            name = ""
+                            number = ""
                 continue
             else:
                 continue
-
+        print(users)
+        print(len(users))
 
 
 

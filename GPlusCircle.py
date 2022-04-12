@@ -11,4 +11,4 @@ class GPlusCircle:
 
 
     def addPerson(self, person):
-        self.members.update(person.number:person)
+        self.members.update({person.number : person})
