@@ -3,8 +3,6 @@
 
 class GPlusCircle:
 
-
-
     def __init__(self, name):
         self.members = {}
         self.name = name

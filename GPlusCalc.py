@@ -20,19 +20,23 @@ class GPlusCalc:
                 print(circle.name)
                 name = ""
                 number = ""
+                nickname = ""
                 with open(takeout + "/Google+ Circles" + "/"  + filename) as vcf:
                     for line in vcf:
                         if line[0:3] == "FN:":
                             name = line[3:len(line)].rstrip()
                         elif line[0:3] == "URL":
                             number = line[29:len(line)].rstrip()
+                        elif line[0:3] == "NIC":
+                            nickname = line[9:len(line)].rstrip()
                         elif line[0:3] == "END":
-                            person = Person(number, name)
+                            person = Person(number, name, nickname)
                             person.addCircle(circle)
                             users.update({number : person})
                             circle.addPerson(person)
                             name = ""
                             number = ""
+                            nickname = ""
                 continue
             else:
                 continue
