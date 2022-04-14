@@ -4,7 +4,7 @@
 class GPlusCircle:
 
     def __init__(self, name):
-        self.members = {}
+        self.users = {}
         self.name = name
 
 
@@ -12,7 +12,16 @@ class GPlusCircle:
         return "[" + self.name + ", " + str(len(self.members)) + "]"
 
     def addPerson(self, person):
-        self.members.update({person.name : person})
+        self.users.update({person.name : person})
 
     def __len__(self):
         return len(self.members)
+
+    def returnUsers(self):
+        return self.users
+    
+    def returnUsernames(self):
+        usernames = []
+        for u in self.users:
+            usernames.append(u)
+        return usernames

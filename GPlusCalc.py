@@ -2,6 +2,7 @@ import sys
 import os
 import csv
 import re
+import itertools
 import datetime
 from bs4 import BeautifulSoup
 from GPlusCircle import GPlusCircle
@@ -11,25 +12,31 @@ from Person import Person
 class GPlusCalc:
 
 
-    def main(self):
-        takeout = sys.argv[1]
+    def main(self):        
+        directory = sys.argv[1]
+        streamDir = os.path.join(directory, "Google+ Stream")
+        logDir = os.path.join(streamDir, "ActivityLog")
 
-        ## Extracts users from saved circle data ##
+
+        ## Extracts users from activity stream ##
         self.unknownCount = 0
         self.users = {}
         self.userAvatars = {}
         self.circles = {"Not Followed":GPlusCircle("Not Followed")}
 
+        print("Extracting Users from +1s")
+        self.extractUsers(logDir, "+1s on posts.html", "THUMBS-CORRESPOND")
+        print("Extracting Users from comments")
+        self.extractUsers(logDir, "Comments.html", "THUMBS-CORRESPOND")
+        print("Extracting Users from +1s on comments")
+        self.extractUsers(logDir, "+1s on comments.html", "THUMBS-DONT-CORRESPOND")
 
 
-        print("Extracting Users")
-        self.extractUsers(takeout, "+1s on posts.html", "THUMBS-CORRESPOND")
-        self.extractUsers(takeout, "Comments.html", "THUMBS-CORRESPOND")
-        self.extractUsers(takeout, "+1s on comments.html", "THUMBS-DONT-CORRESPOND")
 
+        ## Extracts users from saved circle data ##
         print ("Processing Circles")
-        directory = os.fsencode(takeout + "/Google+ Circles")
-        for file in os.listdir(directory):
+        circleDirectory = os.path.join(directory, "Google+ Circles")
+        for file in os.listdir(circleDirectory):
             filename = os.fsdecode(file)
             if filename.endswith(".vcf"):
                 circle = GPlusCircle(filename[0:len(filename)-4])
@@ -37,7 +44,7 @@ class GPlusCalc:
                 name = ""
                 number = ""
                 nickname = ""
-                with open(takeout + "/Google+ Circles" + "/"  + filename) as vcf:
+                with open(os.path.join(circleDirectory, filename), 'r', encoding='utf-8') as vcf:
                     for line in vcf:
                         if line[0:3] == "FN:":
                             name = self.nameCleanup(line[3:len(line)].rstrip())
@@ -63,25 +70,51 @@ class GPlusCalc:
                 continue
 
 
-        ## Like Processing from file ##
+        ## Interaction processing from file ##
         print ("Processing +1s on posts")
-        self.extractInteractions(takeout, "+1s on posts.html")
+        self.extractInteractions(logDir, "+1s on posts.html")
         print ("Processing comments on posts")
-        self.extractInteractions(takeout, "Comments.html")
+        self.extractInteractions(logDir, "Comments.html")
         print ("Processing +1s on comments")
-        self.extractInteractions(takeout, "+1s on comments.html")
+        self.extractInteractions(logDir, "+1s on comments.html")
 
 
 
 
-        #Writing contents to csv
+        ## Writing contents to csv ##
+
         print("Writing data to .CSV")
-        f = open('Users.csv', 'w')
+        f = open('Users.csv', 'w', newline='', encoding='utf-8')
         csvwriter = csv.writer(f)
         csvwriter.writerow(["Profile URL","Name", "Nickname", "Avatar", "+1s", "Comments", "Total", "First Interaction", "Last Interaction"])
         for u in self.users:
             csvwriter.writerow([self.users[u].url, self.users[u].name, self.users[u].nickname, self.users[u].avatar, self.users[u].getPlus1s(), self.users[u].getComments(), self.users[u].totalInteractions(), self.users[u].getFirstInteraction(), self.users[u].getLastInteraction()])
         f.close()
+
+
+        circleSet = []
+        for c in self.circles:
+            circleSet.append(self.circles[c].returnUsernames())
+
+
+
+      
+        columns = list(itertools.zip_longest(*circleSet, ""))
+        f = open('Circles.csv', 'w', newline='', encoding='utf-8')
+        writer = csv.writer(f)
+        writer.writerow(self.circles.keys())
+        
+        writer.writerows(columns)
+        #print(circleSet)
+        #print("^circleSet vcolumns")
+        #print(columns)
+        f.close()
+
+
+       
+        #s    circleSet.update(self.circles[c].returnUsernames())
+
+        
 
 
     def nameCleanup(self, name):
@@ -98,15 +131,20 @@ class GPlusCalc:
         if quoteFilter != -1 and endQuoteFilter != -1:
             name = name[0 : quoteFilter] + name[endQuoteFilter+2:len(name)]
         return name
+        
 
 
-    def extractUsers(self, takeout, filename, mode):
-            if os.path.exists(takeout + "/Google+ Stream/ActivityLog/" + filename):
-                with open(takeout + "/Google+ Stream/ActivityLog/" + filename, 'r') as f:
+    def extractUsers(self, directory, filename, mode):
+            if os.path.exists(os.path.join(directory, filename)):
+                with open(os.path.join(directory, filename), 'r', encoding='utf-8') as f:
                     contents = f.read()
                     interactionSoup = BeautifulSoup(contents, "html.parser")
                     items = interactionSoup.find_all(class_ = "item")
+                    #printcounter = 1
                     for i in items:
+
+                        # print("Processing: " + str(printcounter) + "/" + str(len(items)), end = "\r")
+                        #printcounter += 1
                         currentAvatar = i.a.img["src"]
                         if (currentAvatar in self.userAvatars) == False:
                             currentname = ""
@@ -130,9 +168,9 @@ class GPlusCalc:
 
 
 
-    def extractInteractions(self, takeout, filename,):
-            if os.path.exists(takeout + "/Google+ Stream/ActivityLog/" + filename):
-                with open(takeout + "/Google+ Stream/ActivityLog/" + filename, 'r') as f:
+    def extractInteractions(self, directory, filename,):
+            if os.path.exists(os.path.join(directory, filename)):
+                with open(os.path.join(directory, filename), 'r', encoding='utf-8') as f:
                     contents = f.read()
                     interactionSoup = BeautifulSoup(contents, "html.parser")
                     items = interactionSoup.find_all(class_ = "item")
